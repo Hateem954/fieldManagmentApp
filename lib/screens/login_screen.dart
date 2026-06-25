@@ -306,6 +306,7 @@
 // }
 
 
+import 'package:field_service_app/login_credentials.dart';
 import 'package:field_service_app/screens/home_screen.dart';
 import 'package:field_service_app/utils/customimage.dart';
 import 'package:field_service_app/utils/images.dart';
@@ -329,28 +330,19 @@ class _LoginScreenState extends State<LoginScreen> {
   bool rememberMe = false;
   bool isLoading = false;
 
-  Future<void> loginUser() async {
-    if (emailController.text.trim().isEmpty ||
-        passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
-      );
-      return;
-    }
-
+Future<void> loginUser() async {
     try {
-      setState(() {
-        isLoading = true;
-      });
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      // Get logged-in user's UID
+      String uid = userCredential.user!.uid;
 
-      setState(() {
-        isLoading = false;
-      });
+      // Save UID in local storage
+      await saveUserUid(uid);
 
       ScaffoldMessenger.of(
         context,
@@ -359,41 +351,12 @@ class _LoginScreenState extends State<LoginScreen> {
       // Navigate to Home Screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-
-      String errorMessage = "Login failed";
-
-      switch (e.code) {
-        case 'user-not-found':
-          errorMessage = 'No user found for this email.';
-          break;
-
-        case 'wrong-password':
-          errorMessage = 'Incorrect password.';
-          break;
-
-        case 'invalid-email':
-          errorMessage = 'Invalid email address.';
-          break;
-
-        case 'invalid-credential':
-          errorMessage = 'Invalid email or password.';
-          break;
-
-        default:
-          errorMessage = e.message ?? 'Something went wrong';
-      }
-
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      ).showSnackBar(SnackBar(content: Text(e.message ?? "Login Failed")));
     }
   }
 

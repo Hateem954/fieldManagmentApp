@@ -38,6 +38,8 @@ dependencies:
   flutter_screenutil: ^5.9.3
   firebase_auth: ^6.5.3
   firebase_core: ^4.11.0
+  shared_preferences: ^2.5.5
+ 
 
 dev_dependencies:
   flutter_test:
