@@ -348,7 +348,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:field_service_app/adminwork/assign_task_screen.dart';
 import 'package:field_service_app/adminwork/technition_screen.dart';
 import 'package:field_service_app/screens/customer_information_screen.dart';
-import 'package:field_service_app/screens/job_managment_screen.dart';
+import 'package:field_service_app/screens/task_managment_screen.dart';
 import 'package:field_service_app/screens/notification_screen.dart';
 import 'package:field_service_app/screens/profile_screen.dart';
 import 'package:field_service_app/screens/service_report_screen.dart';
@@ -370,6 +370,8 @@ class _HomeScreenState extends State<HomeScreen> {
 final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String userRole = "Technician";
   String userName = "User";
+  int assignedJobsCount = 0;
+  int acceptedJobsCount = 0;
 
   bool isLoading = true;
 
@@ -377,6 +379,8 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   void initState() {
     super.initState();
     getUserData();
+    getAssignedJobsCount();
+    getAcceptedJobsCount();
   }
 
   Future<void> getUserData() async {
@@ -454,7 +458,7 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
         case 1:
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const JobManagementScreen()),
+            MaterialPageRoute(builder: (_) => const TaskManagementScreen()),
           );
           break;
 
@@ -910,19 +914,34 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
       ];
     }
 
-    if (userRole == "User") {
-      return [
-        dashboardCard("My Requests", "05", Icons.build),
-        dashboardCard("Completed", "03", Icons.check_circle),
-        dashboardCard("Pending", "02", Icons.pending),
-        dashboardCard("Feedback", "04", Icons.feedback),
-      ];
-    }
+    // if (userRole == "User") {
+    //   return [
+    //     dashboardCard("My Requests", "05", Icons.build),
+    //     dashboardCard("Completed", "03", Icons.check_circle),
+    //     dashboardCard("Pending", "02", Icons.pending),
+    //     dashboardCard("Feedback", "04", Icons.feedback),
+    //   ];
+    // }
 
     return [
-      dashboardCard("Assigned Jobs", "12", Icons.assignment),
+      dashboardCard(
+        "Assigned Jobs",
+        assignedJobsCount.toString(),
+        Icons.assignment,
+        onTap: () {
+          
+          Navigator.push(context, MaterialPageRoute(builder: (context)=> TaskManagementScreen()));
+        },
+      ),
       dashboardCard("Completed Jobs", "08", Icons.check_circle),
-      dashboardCard("Pending Jobs", "03", Icons.pending),
+      dashboardCard(
+        "Accepted Jobs",
+        acceptedJobsCount.toString(),
+        Icons.check_circle,
+        onTap: () {
+          Navigator.push(context, (MaterialPageRoute(builder: (context)=> AcceptedTasksScreen())));
+        },
+      ),
       dashboardCard("Service Stats", "92%", Icons.bar_chart),
     ];
   }
@@ -1003,4 +1022,49 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
       ),
     );
   }
+
+
+
+Future<void> getAssignedJobsCount() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? uid = prefs.getString('uid');
+
+  if (uid == null) return;
+
+  // Today's date in the same format as Firestore
+  String todayDate =
+      "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}";
+
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('tasks')
+      .where('technicianId', isEqualTo: uid)
+      .where('status', isEqualTo: 'assigned')
+      .where('date', isEqualTo: todayDate)
+      .get();
+
+  setState(() {
+    assignedJobsCount = snapshot.docs.length;
+  });
+}
+
+Future<void> getAcceptedJobsCount() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? uid = prefs.getString('uid');
+
+  if (uid == null) return;
+
+  String todayDate =
+      "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}";
+
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('tasks')
+      .where('technicianId', isEqualTo: uid)
+      .where('status', isEqualTo: 'accepted')
+      .where('date', isEqualTo: todayDate)
+      .get();
+
+  setState(() {
+    acceptedJobsCount = snapshot.docs.length;
+  });
+}
 }
