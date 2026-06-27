@@ -39,6 +39,7 @@ dependencies:
   firebase_auth: ^6.5.3
   firebase_core: ^4.11.0
   shared_preferences: ^2.5.5
+  cloud_firestore: ^6.6.0
  
 
 dev_dependencies:

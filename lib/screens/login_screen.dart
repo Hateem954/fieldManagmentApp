@@ -306,12 +306,16 @@
 // }
 
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:field_service_app/login_credentials.dart';
 import 'package:field_service_app/screens/home_screen.dart';
+import 'package:field_service_app/screens/profile_screen.dart';
+import 'package:field_service_app/screens/welcomw_screen.dart';
 import 'package:field_service_app/utils/customimage.dart';
 import 'package:field_service_app/utils/images.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // import 'home_screen.dart';
 
@@ -330,35 +334,136 @@ class _LoginScreenState extends State<LoginScreen> {
   bool rememberMe = false;
   bool isLoading = false;
 
+// Future<void> loginUser() async {
+//     try {
+//       UserCredential userCredential = await FirebaseAuth.instance
+//           .signInWithEmailAndPassword(
+//             email: emailController.text.trim(),
+//             password: passwordController.text.trim(),
+//           );
+
+//       User user = userCredential.user!;
+
+//       SharedPreferences prefs = await SharedPreferences.getInstance();
+
+//       await prefs.setString('uid', user.uid);
+//       await prefs.setString('email', user.email ?? '');
+
+//       print("Login Successful");
+//       print("UID: ${user.uid}");
+//       print("Email: ${user.email}");
+
+//       ScaffoldMessenger.of(
+//         context,
+//       ).showSnackBar(const SnackBar(content: Text("Login Successful")));
+
+//       Navigator.pushReplacement(
+//         context,
+//         MaterialPageRoute(builder: (_) => const HomeScreen()),
+//       );
+//     } on FirebaseAuthException catch (e) {
+//       ScaffoldMessenger.of(
+//         context,
+//       ).showSnackBar(SnackBar(content: Text(e.message ?? "Login Failed")));
+//     }
+//   }
+
+
 Future<void> loginUser() async {
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
 
-      // Get logged-in user's UID
-      String uid = userCredential.user!.uid;
+      User user = userCredential.user!;
 
-      // Save UID in local storage
-      await saveUserUid(uid);
+      print("Login Successful");
+      print("UID: ${user.uid}");
+
+      // Save data locally
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString('uid', user.uid);
+      await prefs.setString('email', user.email ?? '');
+
+      // Check profile in Firestore
+      DocumentSnapshot profileDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      setState(() {
+        isLoading = false;
+      });
 
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Login Successful")));
 
-      // Navigate to Home Screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      // If profile does not exist
+      if (!profileDoc.exists) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+        return;
+      }
+
+      // If document exists, check required fields
+      Map<String, dynamic>? data = profileDoc.data() as Map<String, dynamic>?;
+
+      bool profileCompleted =
+          data != null && (data['fullName'] ?? '').toString().isNotEmpty;
+
+      if (profileCompleted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      }
     } on FirebaseAuthException catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+
+      String message = "Login Failed";
+
+      if (e.code == 'user-not-found') {
+        message = "No user found with this email";
+      } else if (e.code == 'wrong-password') {
+        message = "Incorrect password";
+      } else if (e.code == 'invalid-email') {
+        message = "Invalid email address";
+      } else {
+        message = e.message ?? "Login Failed";
+      }
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.message ?? "Login Failed")));
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
+
+
 
   @override
   void dispose() {

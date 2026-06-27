@@ -106,26 +106,21 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     checkLoginStatus();
   }
-
-  Future<void> checkLoginStatus() async {
+Future<void> checkLoginStatus() async {
     await Future.delayed(const Duration(seconds: 3));
 
     final prefs = await SharedPreferences.getInstance();
 
-    // Get saved UID
-    String? uid = prefs.getString('user_uid');
+    final String? uid = prefs.getString('uid');
 
     if (!mounted) return;
 
-    // If UID exists -> Home Screen
     if (uid != null && uid.isNotEmpty) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    }
-    // Otherwise -> Welcome Screen
-    else {
+    } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
