@@ -537,6 +537,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:field_service_app/screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:field_service_app/utils/images.dart';
 
@@ -669,6 +670,72 @@ class _TaskManagementScreenState extends State<TaskManagementScreen> {
 
                               const SizedBox(height: 18),
 
+                              // Row(
+                              //   children: [
+                              //     const Icon(
+                              //       Icons.task,
+                              //       color: Colors.orange,
+                              //     ),
+
+                              //     const SizedBox(width: 10),
+
+                              //     Expanded(
+                              //       child: Text(
+                              //         "Taskid: ${data['taskId'] ?? ''}",
+                              //         style: const TextStyle(fontSize: 15),
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
+                          
+Row(
+  children: [
+    const Icon(
+      Icons.task,
+      color: Colors.orange,
+    ),
+
+    const SizedBox(width: 10),
+
+    Expanded(
+      child: Text(
+        "Task ID: ${data['taskId'] ?? ''}",
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+
+    IconButton(
+      icon: const Icon(
+        Icons.copy,
+        color: Colors.blue,
+      ),
+
+      tooltip: "Copy Task ID",
+
+      onPressed: () async {
+        String taskId = data['taskId'] ?? '';
+
+        await Clipboard.setData(
+          ClipboardData(text: taskId),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Task ID copied: $taskId",
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+    ),
+  ],
+),
+
+                              const SizedBox(height: 12),
                               /// TECHNICIAN
                               Row(
                                 children: [
@@ -908,40 +975,163 @@ child:
                   itemBuilder: (context, index) {
                     final data = tasks[index].data() as Map<String, dynamic>;
 
-                    return Card(
-                      elevation: 5,
-                      margin: const EdgeInsets.only(bottom: 15),
+                    // return Card(
+                    //   elevation: 5,
+                    //   margin: const EdgeInsets.only(bottom: 15),
 
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Colors.green,
-                          child: Icon(Icons.check, color: Colors.white),
-                        ),
+                    //   child: ListTile(
+                    //     leading: const CircleAvatar(
+                    //       backgroundColor: Colors.green,
+                    //       child: Icon(Icons.check, color: Colors.white),
+                    //     ),
 
-                        title: Text(
-                          data['issue'] ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                    //     title: Text(
+                    //       data['issue'] ?? '',
+                    //       style: const TextStyle(fontWeight: FontWeight.bold),
+                    //     ),
 
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Technician: ${data['technicianName']}"),
-                            Text("Role: ${data['technicianRole']}"),
-                            Text("Date: ${data['date']}"),
-                          ],
-                        ),
+                    //     subtitle: Column(
+                    //       crossAxisAlignment: CrossAxisAlignment.start,
+                    //       children: [
+                    //         Text("Task ID: ${data['taskId']}"),
+                    //         Text("Technician: ${data['technicianName']}"),
+                    //         Text("Role: ${data['technicianRole']}"),
+                    //         Text("Date: ${data['date']}"),
 
-                        trailing: Chip(
-                          backgroundColor: Colors.green.shade100,
-                          label: const Text(
-                            "ACCEPTED",
-                            style: TextStyle(color: Colors.green),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                    //       ],
+                    //     ),
+
+                    //     trailing: Chip(
+                    //       backgroundColor: Colors.green.shade100,
+                    //       label: const Text(
+                    //         "ACCEPTED",
+                    //         style: TextStyle(color: Colors.green),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // );
+                  // },
+                 
+return Card(
+  elevation: 5,
+  margin: const EdgeInsets.only(bottom: 15),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(15),
+  ),
+
+  child: Padding(
+    padding: const EdgeInsets.all(15),
+
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const CircleAvatar(
+              backgroundColor: Colors.green,
+              child: Icon(
+                Icons.check,
+                color: Colors.white,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Text(
+                data['issue'] ?? '',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+            ),
+
+            Chip(
+              backgroundColor: Colors.green.shade100,
+              label: const Text(
+                "ACCEPTED",
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 15),
+
+        /// TASK ID WITH COPY BUTTON
+        Row(
+          children: [
+            const Icon(
+              Icons.task,
+              color: Colors.orange,
+            ),
+
+            const SizedBox(width: 10),
+
+            Expanded(
+              child: Text(
+                "Task ID: ${data['taskId'] ?? ''}",
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            IconButton(
+              icon: const Icon(
+                Icons.copy,
+                color: Colors.blue,
+              ),
+
+              tooltip: "Copy Task ID",
+
+              onPressed: () async {
+                String taskId = data['taskId'] ?? '';
+
+                await Clipboard.setData(
+                  ClipboardData(text: taskId),
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "Task ID copied: $taskId",
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        Text(
+          "Technician: ${data['technicianName']}",
+        ),
+
+        const SizedBox(height: 6),
+
+        Text(
+          "Role: ${data['technicianRole']}",
+        ),
+
+        const SizedBox(height: 6),
+
+        Text(
+          "Date: ${data['date']}",
+        ),
+      ],
+    ),
+  ),
+);
+                  }
                 );
               },
             ),

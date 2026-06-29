@@ -1254,49 +1254,63 @@ class _TechniciansScreenState extends State<TechniciansScreen> {
 
 // Future<void> assignTask(
 //   DocumentSnapshot user,
-//   String service,
 //   String issue,
 //   String date,
 // ) async {
 //   try {
 //     await FirebaseFirestore.instance.collection('tasks').add({
-//       'technicianId': user.id,
+//       'technicianId': user.id, // UID
 //       'technicianName': user['fullName'] ?? '',
-//       'serviceType': service,
+//       'technicianRole': user['role'] ?? '', // ROLE USED HERE
 //       'issue': issue,
 //       'date': date,
 //       'status': 'assigned',
 //       'createdAt': FieldValue.serverTimestamp(),
 //     });
 
-//     ScaffoldMessenger.of(
-//       context,
-//     ).showSnackBar(const SnackBar(content: Text("Task Assigned Successfully")));
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       const SnackBar(content: Text("Task Assigned Successfully")),
+//     );
 //   } catch (e) {
-//     ScaffoldMessenger.of(
-//       context,
-//     ).showSnackBar(SnackBar(content: Text("Error: $e")));
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(content: Text("Error: $e")),
+//     );
 //   }
 // }
 // }
+
 Future<void> assignTask(
   DocumentSnapshot user,
   String issue,
   String date,
 ) async {
   try {
+
+    /// Generate Unique Task ID
+    String taskId =
+        "TSK-${DateTime.now().millisecondsSinceEpoch}";
+
     await FirebaseFirestore.instance.collection('tasks').add({
-      'technicianId': user.id, // UID
+      'taskId': taskId, // GENERATED ID
+
+      'technicianId': user.id,
       'technicianName': user['fullName'] ?? '',
-      'technicianRole': user['role'] ?? '', // ROLE USED HERE
+      'technicianRole': user['role'] ?? '',
+
       'issue': issue,
       'date': date,
+
       'status': 'assigned',
+
       'createdAt': FieldValue.serverTimestamp(),
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Task Assigned Successfully")),
+      SnackBar(
+        content: Text(
+          "Task Assigned Successfully\nID: $taskId",
+        ),
+      ),
     );
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(

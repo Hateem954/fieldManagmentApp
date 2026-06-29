@@ -346,6 +346,8 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:field_service_app/adminwork/assign_task_screen.dart';
+import 'package:field_service_app/adminwork/complete_reports_screen.dart';
+import 'package:field_service_app/adminwork/reports_screen.dart';
 import 'package:field_service_app/adminwork/technition_screen.dart';
 import 'package:field_service_app/screens/customer_information_screen.dart';
 import 'package:field_service_app/screens/task_managment_screen.dart';
@@ -383,6 +385,24 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
     getAcceptedJobsCount();
   }
 
+Future<String?> getUid() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('uid');
+  }
+
+  Future<int> getCompletedJobsCount() async {
+    final uid = await getUid();
+
+    if (uid == null) return 0;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('service_reports')
+        .where('status', isEqualTo: 'Completed')
+        .where('technicianId', isEqualTo: uid)
+        .get();
+
+    return snapshot.docs.length;
+  }
   Future<void> getUserData() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -434,7 +454,7 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
         case 1:
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const TechniciansScreen()),
+            MaterialPageRoute(builder: (_) =>  TechniciansScreen()),
           );
           break;
 
@@ -470,12 +490,7 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
           break;
 
         case 3:
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const CustomerInformationScreen(),
-            ),
-          );
+       
           break;
 
         case 4:
@@ -561,10 +576,7 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
         icon: Icon(Icons.report_outlined),
         label: "Service",
       ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.people_outline),
-        label: "Customers",
-      ),
+     
       BottomNavigationBarItem(
         icon: Icon(Icons.person_outline),
         label: "Profile",
@@ -887,9 +899,63 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
           },
         ),
 
-        dashboardCard("Complete Tasks", "18", Icons.assignment),
+        // dashboardCard("Complete Tasks", "18", Icons.assignment),
+StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('service_reports')
+              .where('status', isEqualTo: 'Completed')
+              .snapshots(),
 
-        dashboardCard("Reports", "14", Icons.analytics),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return dashboardCard("Completed Tasks", "0", Icons.analytics);
+            }
+
+            int totalCompleted = snapshot.data!.docs.length;
+
+            return dashboardCard(
+              "Completed Tasks",
+              totalCompleted.toString(),
+              Icons.analytics,
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=> CompletedReportsScreen()));
+              },
+            );
+          },
+        ),
+        // dashboardCard("Reports", "14", Icons.analytics),
+
+StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('service_reports')
+      .snapshots(),
+
+  builder: (context, snapshot) {
+    if (!snapshot.hasData) {
+      return dashboardCard(
+        "Reports",
+        "0",
+        Icons.analytics,
+      
+      );
+    }
+
+    int totalReports = snapshot.data!.docs.length;
+
+    return dashboardCard(
+      "Reports",
+      totalReports.toString(),
+      Icons.analytics,
+        onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ReportsScreen()),
+                );
+              },
+    );
+  },
+),
+
 
         // dashboardCard("Assign Tasks", "\$4500", Icons.attach_money),
         StreamBuilder<QuerySnapshot>(
@@ -933,7 +999,19 @@ final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
           Navigator.push(context, MaterialPageRoute(builder: (context)=> TaskManagementScreen()));
         },
       ),
-      dashboardCard("Completed Jobs", "08", Icons.check_circle),
+      // dashboardCard("Completed Jobs", "08", Icons.check_circle),
+      FutureBuilder<int>(
+        future: getCompletedJobsCount(),
+        builder: (context, snapshot) {
+          final count = snapshot.data ?? 0;
+
+          return dashboardCard(
+            "Completed Jobs",
+            count.toString().padLeft(2, '0'),
+            Icons.check_circle,
+          );
+        },
+      ),
       dashboardCard(
         "Accepted Jobs",
         acceptedJobsCount.toString(),
